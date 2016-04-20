@@ -1,7 +1,7 @@
 (ns indent-sniffer.scanner
   (:require [clojure.string :as string]
             [clojure.set :as set]
-            [incanter.stats :as stats]
+            [com.stuartsierra.frequencies :as freq]
             [clojure.pprint :refer [pprint]]))
 
 (def ws-pattern #"^([ \t]*)(.*)$")
@@ -51,7 +51,7 @@
 
 ; indent rules
 ; eliminate any indent matches that have less than a minimum % good - usually should be near 100% but rogue tabs or comments might mess things up.  Not going to try to guess what mixed tabs and spaces means!
-(def minimum-good 0.8)
+(def minimum-good 0.7)
 ; if we have no matches, going to report that for now so we can tune.  Might be we default to ignore, or use spaces.
 
 ; if we have multiple matches, we want the biggest one, as long as they are close, whatever that means!
@@ -65,11 +65,15 @@
 
 (defn- above-mingood
   [{{:keys [good bad indifferent]} :matches}]
-  (< minimum-good (/ good (+ good bad))))
+  (if (zero? (+ good bad))
+    false
+    (< minimum-good (/ good (+ good bad)))))
 
 (defn- above-mingood-multi
   [{{:keys [good bad indifferent]} :matches}]
-  (< minimum-good-multiple-matches (/ good (+ good bad))))
+  (if (zero? (+ good bad))
+    false
+    (< minimum-good-multiple-matches (/ good (+ good bad)))))
 
 (defn- biggest-indent [indents]
   (->> indents
@@ -81,9 +85,14 @@
   (let [good-indents (filter above-mingood indent-matches)
         best-indents (filter above-mingood-multi indent-matches)]
     (cond
-      (empty? good-indents) nil
+      (empty? good-indents) (do
+                              (binding [*out* *err*]
+                                (println "no good indents in:")
+                                (pprint indent-matches))
+                              nil)
       (= 1 (count good-indents)) (first good-indents)
       (= 1 (count best-indents)) (first best-indents)
+      (empty? best-indents) (biggest-indent good-indents)
       :else (biggest-indent best-indents))))
 
 
@@ -104,10 +113,7 @@
           line-indents (filter identity (map #(line-indent % indent-size) line-infos))]
        {:indent-size  indent-size
           :matches line-match-stats
-          :count   (count line-indents)
-          :mean    (stats/mean line-indents)
-          :median  (stats/median line-indents)
-          :max     (apply max line-indents)
+          :stats (freq/stats (frequencies line-indents))
           :indents line-indents})))
 
 (defn best-line-stats [lines indents]

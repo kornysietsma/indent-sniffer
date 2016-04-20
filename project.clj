@@ -8,7 +8,7 @@
                  [me.raynes/conch "0.8.0"]
                  [org.clojure/tools.cli "0.3.3"]
                  [cheshire "5.5.0"]
-                 [incanter/incanter-core "1.5.7"]
+                 [com.stuartsierra/frequencies "0.1.0"]
                  ]
   :main indent-sniffer.cli
   :profiles {

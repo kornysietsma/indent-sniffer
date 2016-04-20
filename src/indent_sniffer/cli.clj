@@ -53,7 +53,7 @@
                   out (scanner/best-file-line-stats rdr default-indents)]
               {:filename file
                :data     {:indents out}}))
-          (cheshire/generate-stream out-file true))
+          (cheshire/generate-stream out-file {:pretty true}))
         (finally
           (if (:output options)
             (.close out-file)))))))

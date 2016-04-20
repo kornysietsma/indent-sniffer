@@ -86,29 +86,32 @@
 
 (fact "line stats get accumulated for each indent candidate"
       (subject/accumulate-line-stats
+        ["  two"] [2])
+      => (just (just {:indent-size 2
+                      :matches     {:good 1 :bad 0 :indifferent 0}
+                      :stats       (contains {:max 1 :mean (roughly 1.0)})
+                      :indents     [1]
+                      })
+               )
+
+      (subject/accumulate-line-stats
         [""
          "zero"
          "  two"
          "   three"
          "    four"] [2 4])
-      => [{:indent-size  2
-              :count   3
-              :matches {:bad 1 :good 2 :indifferent 2}
-              :max     2
-              :mean    1.0
-              :median  1.0
-              :indents [0 1 2]
-              }
-          {:indent-size  4
-           :count   2
-           :matches {:bad 2 :good 1 :indifferent 2}
-           :max     1
-           :mean    0.5
-           :median  0.5
-           :indents [0 1]
-           }])
+      => (just (just {:indent-size 2
+                      :matches     {:bad 1 :good 2 :indifferent 2}
+                      :stats       (contains {:max 2 :mean (roughly 1.0)})
+                      :indents     [0 1 2]
+                      })
+               (contains {:indent-size 4
+                          :matches     {:bad 2 :good 1 :indifferent 2}
+                          :stats       (contains {:max 1 :sample-count 2 :mean 0.5})
+                          :indents     [0 1]
+                          })))
 
-(fact "just the best match stats can be returned by best-line-stats"
+(future-fact "just the best match stats can be returned by best-line-stats"
       (subject/best-line-stats
         [""
          "zero"
