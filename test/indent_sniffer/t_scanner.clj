@@ -58,6 +58,15 @@
   false  2     0       0         2
 )
 
+(tabular
+  (fact "can calculate best-guess indent levels for a given scenario"
+        (subject/line-indent {:blank ?blank :tabs ?tabs :spaces ?spaces} ?indent true) => ?result)
+  ?blank ?tabs ?spaces ?indent   ?result
+  false  0     5       2         (roughly 2.5)
+  false  2     1       0         2.5
+  false  2     2       2         9
+  )
+
 (fact "can accumultate matches, defaulting to zero for simpler maths"
       (subject/match-frequencies [:good :good :bad])
       => {:good 2 :bad 1 :indifferent 0})
@@ -84,7 +93,7 @@
       => {:matches {:good 198 :bad 1 :indifferent 3} :indent-size 3 :extra :bar}
       )
 
-(fact "line stats get accumulated for each indent candidate"
+(fact "line stats get accumulated for each indent candidate based on best guess"
       (subject/accumulate-line-stats
         ["  two"] [2])
       => (just (just {:indent-size 2
@@ -102,26 +111,23 @@
          "    four"] [2 4])
       => (just (just {:indent-size 2
                       :matches     {:bad 1 :good 2 :indifferent 2}
-                      :stats       (contains {:max 2 :mean (roughly 1.0)})
-                      :indents     [0 1 2]
+                      :stats       (contains {:max 2 :sample-count 4})
+                      :indents     [0 1 (/ 3 2) 2]
                       })
-               (contains {:indent-size 4
+               (just {:indent-size 4
                           :matches     {:bad 2 :good 1 :indifferent 2}
-                          :stats       (contains {:max 1 :sample-count 2 :mean 0.5})
-                          :indents     [0 1]
+                          :stats       (contains {:max 1 :sample-count 4})
+                          :indents     [0 (/ 1 2) (/ 3 4) 1]
                           })))
 
-(future-fact "just the best match stats can be returned by best-line-stats"
+(fact "just the best match stats can be returned by best-line-stats"
       (subject/best-line-stats
         [""
          "zero"
          "  two"
          "    four"] [2 4])
-      => {:indent-size  2
-          :count   3
-          :matches {:bad 0 :good 2 :indifferent 2}
-          :max     2
-          :mean    1.0
-          :median  1.0
-          :indents [0 1 2]}
+      => (just {:indent-size 2
+                :matches     {:bad 0 :good 2 :indifferent 2}
+                :stats       (contains {:mean (roughly 1.0)})
+                :indents     [0 1 2]})
       )

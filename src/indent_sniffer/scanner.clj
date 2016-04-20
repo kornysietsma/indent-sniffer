@@ -31,22 +31,31 @@
       :else :bad
       )))
 
+(def guessed-spaces-if-tabs 0.5)
+(def guessed-tabs-if-spaces 4)
+
 (defn line-indent
   "calculate the indent 'value' for a given line and scenario, or nil if it's a bad match"
-  [{:keys [blank spaces tabs]} indent]
-  (if (zero? indent)                                        ; tab
-    (cond
-      blank nil
-      (= 0 spaces tabs) 0
-      (not= 0 spaces) nil
-      :else tabs)
-    (cond
-      blank nil
-      (= 0 spaces tabs) 0
-      (not= 0 tabs) nil
-      (= 0 (rem spaces indent)) (/ spaces indent)
-      :else nil
-      ))  )
+  ([line-matches indent] (line-indent line-matches indent false))
+  ([{:keys [blank spaces tabs]} indent best-guess]
+   (if (zero? indent)                                        ; tab
+     (cond
+       blank nil
+       (= 0 spaces tabs) 0
+       (not= 0 spaces) (if best-guess
+                         (+ tabs (* guessed-spaces-if-tabs spaces))
+                         nil)
+       :else tabs)
+     (cond
+       blank nil
+       (= 0 spaces tabs) 0
+       (not= 0 tabs) (if best-guess
+                       (+ (/ spaces indent) (* guessed-tabs-if-spaces tabs))
+                       nil)
+       (= 0 (rem spaces indent)) (/ spaces indent)
+       :else (if best-guess
+               (/ spaces indent)
+               nil)))))
 
 
 ; indent rules
@@ -110,7 +119,7 @@
     (let [line-infos (scan-lines lines)
           line-matches (map #(matches % indent-size) line-infos)
           line-match-stats (match-frequencies line-matches)
-          line-indents (filter identity (map #(line-indent % indent-size) line-infos))]
+          line-indents (filter identity (map #(line-indent % indent-size true) line-infos))]
        {:indent-size  indent-size
           :matches line-match-stats
           :stats (freq/stats (frequencies line-indents))
