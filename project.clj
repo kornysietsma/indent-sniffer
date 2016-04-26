@@ -9,6 +9,7 @@
                  [org.clojure/tools.cli "0.3.3"]
                  [cheshire "5.5.0"]
                  [com.stuartsierra/frequencies "0.1.0"]
+                 [com.taoensso/timbre "4.3.1"]
                  ]
   :main indent-sniffer.cli
   :profiles {

@@ -6,7 +6,8 @@
     [clojure.java.io :as io]
     [clojure.string :as string]
     [me.raynes.fs :as fs]
-    [clojure.pprint :refer [pprint]])
+    [clojure.pprint :refer [pprint]]
+    [taoensso.timbre :as timbre])
   (:gen-class)
   (:import (java.io File)))
 
@@ -14,6 +15,7 @@
   [["-o" "--output filename" "select an output file name (default is STDOUT)"]
    ["-e" "--extensions list-of-file-extensions" "list of file extensions to scan - case insensitive, comma separated"]
    ["-i" "--hidden" "include hidden directories and files"]
+   ["-l" "--log" "log more info for un-indentable files"]
    ["-h" "--help"]])
 
 (defn usage [options-summary]
@@ -57,6 +59,7 @@
 
 
 (defn scan-file-or-files [options ^File file]
+  (timbre/debug "scanning file/dir " file)
   (if (.isFile file)
     (let [rdr (io/reader file)
           out (scanner/best-file-line-stats rdr default-indents)]
@@ -72,6 +75,9 @@
       (:help options) (exit 0 (usage summary))
       (zero? (count arguments)) (exit 1 (usage summary))
       errors (exit 1 (error-msg errors)))
+    (if (:log options)
+      (timbre/set-level! :debug)
+      (timbre/set-level! :warn))
     (let [out-file (if (:output options)
                      (io/writer (:output options))
                      *out*)

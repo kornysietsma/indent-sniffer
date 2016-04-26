@@ -2,7 +2,9 @@
   (:require [clojure.string :as string]
             [clojure.set :as set]
             [com.stuartsierra.frequencies :as freq]
-            [clojure.pprint :refer [pprint]]))
+            [clojure.pprint :refer [pprint]]
+            [taoensso.timbre :as timbre
+             :refer (trace  debug  info  warn  error  fatal)]))
 
 (def ws-pattern #"^([ \t]*)(.*)$")
 
@@ -95,9 +97,8 @@
         best-indents (filter above-mingood-multi indent-matches)]
     (cond
       (empty? good-indents) (do
-                              (binding [*out* *err*]
-                                (println "no good indents in:")
-                                (pprint indent-matches))
+                              (if (timbre/log? :info)
+                                (info "no good indents in" (pr-str indent-matches)))
                               nil)
       (= 1 (count good-indents)) (first good-indents)
       (= 1 (count best-indents)) (first best-indents)
