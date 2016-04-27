@@ -1,5 +1,6 @@
 (ns indent-sniffer.scanner
-  (:require [clojure.string :as string]
+  (:require [indent-sniffer.bitmaps :as bitmaps]
+            [clojure.string :as string]
             [clojure.set :as set]
             [com.stuartsierra.frequencies :as freq]
             [clojure.pprint :refer [pprint]]
@@ -121,10 +122,10 @@
           line-matches (map #(matches % indent-size) line-infos)
           line-match-stats (match-frequencies line-matches)
           line-indents (filter identity (map #(line-indent % indent-size true) line-infos))]
-       {:indent-size  indent-size
-          :matches line-match-stats
-          :stats (freq/stats (frequencies line-indents))
-          :indents line-indents})))
+      {:indent-size indent-size
+       :matches     line-match-stats
+       :stats       (freq/stats (frequencies line-indents))
+       :indents     (bitmaps/indents->imageurl line-indents)})))
 
 (defn best-line-stats [lines indents]
   (if-let [line-stats (accumulate-line-stats lines indents)]

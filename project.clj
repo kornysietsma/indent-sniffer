@@ -10,6 +10,7 @@
                  [cheshire "5.5.0"]
                  [com.stuartsierra/frequencies "0.1.0"]
                  [com.taoensso/timbre "4.3.1"]
+                 [org.clojure/data.codec "0.1.0"]
                  ]
   :main indent-sniffer.cli
   :profiles {
