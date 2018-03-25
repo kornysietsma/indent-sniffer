@@ -1,3 +1,7 @@
+# archived!
+
+I'm archiving this for now - I have a simpler version I'll push soon-ish, which doesn't try to do as much.
+
 # indent-sniffer
 
 A Clojure library designed to guess complexity stats based on indentation within files - in a language agnostic way
